@@ -42,48 +42,133 @@
 #include <stdint.h>
 #include <p24fxxxx.h>
 
-#define FCPU	16000000UL
-#define T2PERIOD	0xFFFF
+#include "decode.h"
+#include "uart.h"
 
-volatile uint32_t dly;
+// Timer2 period register value
+#define T2TICKS	0xFFFF
+
 volatile uint16_t TimerTick;
 long CountTime;
 
-void __attribute__((__interrupt__, __auto_psv__))_T2Interrupt(void)
+// ============================================================================
+//
+// InitTimer2 -- Initialize Timer2
+//
+// Generate a heartbeat interrupt and provide the time base for DCC bit timing
+// via the input capture interrupt
+//
+// Requires a _T2Interrupt() ISR routine
+//
+void InitTimer2( void )
 {
-	IFS0bits.T2IF = 0;		// Clear interrupt flag
-	++TimerTick;
-}
-
-int main(int argc, char** argv)
-{
-	// Configure PORTA to drive LED
-    TRISAbits.TRISA4 = 0;       // Bit 4 is output
-
-	CLKDIVbits.RCDIV = 0;
-	
-	// Configure Timer2 for heartbeat interrupt, timer will run to its full count
-	// Generate an interrupt on overflow and use it to drive heartbeat time.
-	// This timer will also be used for input capture timing.
 	T2CON = 0;				// Stop timer and reset control bits
 	TMR2 = 0;
-	PR2 = T2PERIOD;			// Load maximum period
+	PR2 = T2TICKS;			// Load maximum period
 	IPC1bits.T2IP = 7;		// Priority level low
 	IFS0bits.T2IF = 0;		// Clear any stale interrupt
 	IEC0bits.T2IE = 1;		// Enable Timer2 interrupts
 	T2CONbits.TON = 1;		// Start Timer2
+}
+
+// ============================================================================
+//
+void uputnibblehex( uint16_t bval )
+{
+	uputc( "0123456789ABCDEF"[bval] );
+}
+
+// ============================================================================
+//
+void uputbytehex( uint16_t bval )
+{
+	uputnibblehex( (bval >> 4) & 0x000F );
+	uputnibblehex( bval & 0x000F );
+}
+
+// ============================================================================
+//
+void uputwordhex( uint16_t val )
+{
+	uputbytehex( (val >> 8) & 0x00FF );
+	uputbytehex( val & 0x00FF );
+}
+// ============================================================================
+//
+void ShowBaud( uint16_t baud )
+{
+	int idx;
+
+	// Print a sequence to sync up with terminal
+	// Print CR LF
+	// Print current Baud divisor
+	// Print CR LF
+	for ( idx=0; idx<10; ++idx )
+		uputc('=');
+	uputc(' ');
+	uputc('0');
+	uputc('x');
+	uputwordhex( baud );
+	uputc('\r');
+	uputc('\n');
+}
+
+#ifdef rlsDEBUG
+#define UBRGMIN	(BRGDIVISOR)-5
+#define UBRGMAX	(BRGDIVISOR)+5
+#endif
+// ============================================================================
+//
+int main(int argc, char** argv)
+{
+#ifdef rlsDEBUG
+	int ubrg = UBRGMIN;
+#endif	// rlsDEBUG
+	int LoopCount = 0;
+	int ch = ' ';
+
+	AD1PCFG = 0xFFFF;			// Disable all analog channels
+	CLKDIVbits.RCDIV = 0;		// Set primary oscillator speed
+
+	// Configure PORTA to drive LED
+    TRISAbits.TRISA4 = 0;       // PORTB.4 is output
+	LATAbits.LATA4 = 0;			// Turn of the LED
+
+	// Configure timer2 to drive heartbeat interrupt
+	InitTimer2();
+	InitUart1();
+#ifdef rlsDEBUG
+U1BRG = ubrg;
+#endif	// rlsDEBUG
 
 	// Main Loop
     while(1) {
 		if ( TimerTick ) {
 			--TimerTick;
-			CountTime -= T2PERIOD;
-			if ( CountTime <= T2PERIOD ) {
+			CountTime -= T2TICKS;
+			if ( CountTime <= T2TICKS ) {
+				++LoopCount;
 				CountTime += FCPU;
+
+#if rlsDEBUG
+				ShowBaud( U1BRG );
+				if ( 0 == (LoopCount & 0x0007) ) {
+					if ( ubrg < UBRGMAX ) {
+						++ubrg;
+						U1BRG = ubrg;
+					}
+				}
+#endif	// rlsDEBUG
 				LATAbits.LATA4 ^= 1;
 			}
 		}
-    }
+#if 1
+		uputc(++ch);
+		if ( ch >= 0x7E )
+			ch = ' ';
+#endif
+	}
     return 0;
 }
 
+// ============================================================================
