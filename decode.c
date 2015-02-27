@@ -1,9 +1,9 @@
 /* 
- * File:   decode.c
- * Author: randy
- *
- * Created on February 25, 2015, 11:17 AM
- */
+** File:   decode.c
+** Author: randy
+**
+** Created on February 25, 2015, 11:17 AM
+*/
 
 // Configuration bits
 //#pragma config BWRP = OFF
