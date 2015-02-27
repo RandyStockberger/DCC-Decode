@@ -1,7 +1,10 @@
 #
 # This .gitignore rejects all non-source files, including Makefiles.
 #
+Makefile
+#
 build/*
+dist/*
+#
 # nbproject includes MPLAB X project files...
 nbproject/*
-dist/*
