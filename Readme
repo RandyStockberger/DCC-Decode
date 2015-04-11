@@ -1,0 +1,13 @@
+
+Program:
+	DCC-Decode
+
+Description:
+	An embedded program running on a PIC24 microprocessor to extract and execute
+	commands from a model railroad command station. This program implements an
+	accessory decoder but the code should enable, with significant alterations,
+	the creation of a multi-function decoder.
+
+	The communications protocol is defined by the National Model Railroad Association
+	(NMRA) and is documented on their web site in their NMRA Standards 'S 9.1',
+	S-9.1.2, S 9.2, S-9.2.1, S-9.2.2, S-9.2.3 and S-9.2.4
