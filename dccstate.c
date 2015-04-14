@@ -40,8 +40,9 @@
 //  11111111111111        0         10010101      0        10010100       0        11001010       1
 //
 
-#ifdef ENABLED
+#include <stdint.h>
 
+#include "decode.h"
 #include "uart.h"
 #include "ustdio.h"
 #include "DccState.h"
@@ -206,8 +207,6 @@ void ProcessDCCBit( unsigned int BitTime )
 	}
 
 }
-
-#endif // ENABLED
 
 // ====================================================================
 

@@ -174,9 +174,9 @@ int main(int argc, char** argv)
 	uprintf("HZ: %d\r\n", (int)((FT2)/(HB_TICKS)) );
 	uprintf("Reset register RCON:%x\r\n\r\n", uRcon );
 
-#ifdef ENABLED
+#ifdef ICSYNC
 	ICSync();
-#endif // ENABLED
+#endif // ICSYNC
 
 	// Main Loop
     while(1) {
@@ -333,7 +333,7 @@ void InitHBTimer( void )
 
 #endif
 }
-#ifdef ENABLED
+#ifdef ICSYNC
 //
 // ============================================================================
 //
@@ -495,4 +495,4 @@ void ICSync( void )
 //
 // ============================================================================
 //
-#endif // ENABLED
+#endif // ICSYNC
